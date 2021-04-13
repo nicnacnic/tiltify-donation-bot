@@ -69,7 +69,7 @@ client.once('ready', () => {
 			}
 			else
 				message.channel.send(`No campaign ID or auth token has been specified!`)
-			message.delete({ reason: 'To protect your Tiltify auth token from unauthorized access.' })
+			message.delete().catch(error => { message.channel.send(`To protect your auth token, I tried deleting your message but I\'m missing permissions!`) })
 		}
 	});
 
