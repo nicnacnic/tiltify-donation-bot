@@ -42,7 +42,6 @@ client.once('ready', () => {
 					.then(response => response.json())
 					.then(json => {
 						tiltifyData = json;
-						console.log(tiltifyData);
 						if (tiltifyData.meta.status != 200)
 							message.channel.send(`Your Tiltify campaign ID or auth token is incorrect!`);
 						else {
@@ -123,7 +122,7 @@ client.once('ready', () => {
 		message.channel.send('Pong!').then(m => { message.channel.send('`' + (m.createdTimestamp - message.createdTimestamp) + 'ms`') });
 	});
 
-	command(client, ['donation', 'd'], false, (message, guild, data) => {
+	command(client, 'donation', false, (message, guild, data) => {
 		if (guild.showDonations)
 			donation(client, guild, true, (donation) => {
 				guild.lastDonationID = donation.id;
@@ -137,7 +136,7 @@ client.once('ready', () => {
 		message.channel.send('Tiltify Bot was created by nicnacnic. Why don\'t you follow him over at https://twitch.tv/nicnacnic and https://twitter.com/nicnacnic11!');
 	});
 
-	command(client, ['help', 'commands', 'h'], false, (message, guild) => {
+	command(client, ['help', 'commands'], false, (message, guild) => {
 		let prefix = '$';
 		if (guild !== undefined)
 			prefix = guild.prefix;
@@ -167,6 +166,7 @@ client.once('ready', () => {
 			.setFooter("Tiltify Bot made by nicnacnic")
 			.setTimestamp()
 		message.author.send(setupEmbed);
+		message.reply("a guide was DMed to you!")
 	});
 
 	function updateBotStatus() {
