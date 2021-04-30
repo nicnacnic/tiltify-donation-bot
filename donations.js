@@ -1,13 +1,14 @@
 const fs = require('fs');
 const fetch = require('node-fetch');
 const guildData = './data/guilds.json';
+const { tiltifyAccessToken } = require('./config.json');
 const Discord = require('discord.js');
 
 module.exports = (client, guild, forceShow, callback) => {
 	fetch(`https://tiltify.com/api/v3/campaigns/${guild.tiltifyCampaignID}/donations`, {
 		method: 'GET',
 		headers: {
-			'Authorization': `Bearer ${guild.tiltifyAuthToken}`
+			'Authorization': `Bearer ${tiltifyAccessToken}`
 		},
 		dataType: 'json',
 	}).then(response => response.json())
@@ -33,6 +34,6 @@ module.exports = (client, guild, forceShow, callback) => {
 					callback(donation);
 				}
 			}
-			catch { console.log('Error while requesting donation data. Either your campaign ID/auth token is incorrect, or there are no donations for that campaign.') };
+			catch { console.log('Error while requesting donation data. Either your campaign ID is incorrect, or there are no donations for that campaign.') };
 		});
 }

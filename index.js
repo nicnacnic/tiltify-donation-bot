@@ -3,7 +3,7 @@ const fetch = require("node-fetch");
 const Discord = require('discord.js');
 const command = require('./commands');
 const donation = require('./donations');
-const { token, defaultPrefix, donationRefresh } = require('./config.json');
+const { token, tiltifyAccessToken, defaultPrefix, donationRefresh } = require('./config.json');
 const guildData = './data/guilds.json';
 let numCampaigns = JSON.parse(fs.readFileSync(guildData)).length;
 require('events').EventEmitter.defaultMaxListeners = 15;
@@ -31,11 +31,11 @@ client.once('ready', () => {
 		if (!message.guild.me.hasPermission('MANAGE_MESSAGES'))
 			message.channel.send('I must have the manage messages permission to do that!');
 		else {
-			if (content[1] !== undefined && content[2] !== undefined) {
+			if (content[1] !== undefined) {
 				fetch(`https://tiltify.com/api/v3/campaigns/${content[1]}`, {
 					method: 'GET',
 					headers: {
-						'Authorization': `Bearer ${content[2]}`
+						'Authorization': `Bearer ${tiltifyAccessToken}`
 					},
 					dataType: 'json',
 				})
@@ -43,21 +43,20 @@ client.once('ready', () => {
 					.then(json => {
 						tiltifyData = json;
 						if (tiltifyData.meta.status != 200)
-							message.channel.send(`Your Tiltify campaign ID or auth token is incorrect!`);
+							message.channel.send(`Your Tiltify campaign is incorrect!`);
 						else {
 							if (guild !== undefined) {
 								guild.name = message.guild.name;
 								guild.id = message.guild.id;
 								guild.channel = message.channel.id;
 								guild.tiltifyCampaignID = content[1];
-								guild.tiltifyAuthToken = content[2];
 								guild.campaignURL = 'https://tiltify.com/@' + tiltifyData.data.user.slug + '/' + tiltifyData.data.slug;
 								guild.lastDonationID = 0;
 								guild.showDonations = false;
 								guild.prefix = defaultPrefix;
 							}
 							else {
-								data.push({ name: message.guild.name, id: message.guild.id, channel: message.channel.id, tiltifyCampaignID: content[1], tiltifyAuthToken: content[2], campaignURL: 'https://tiltify.com/@' + tiltifyData.data.user.slug + '/' + tiltifyData.data.slug, showDonations: false, prefix: defaultPrefix });
+								data.push({ name: message.guild.name, id: message.guild.id, channel: message.channel.id, tiltifyCampaignID: content[1], campaignURL: 'https://tiltify.com/@' + tiltifyData.data.user.slug + '/' + tiltifyData.data.slug, showDonations: false, prefix: defaultPrefix });
 								numCampaigns++;
 								updateBotStatus();
 							}
@@ -67,8 +66,7 @@ client.once('ready', () => {
 					});
 			}
 			else
-				message.channel.send(`No campaign ID or auth token has been specified!`)
-			message.delete().catch(error => { message.channel.send(`To protect your auth token, I tried deleting your message but I\'m missing permissions!`) })
+				message.channel.send(`No campaign ID has been specified!`)
 		}
 	});
 
@@ -89,7 +87,7 @@ client.once('ready', () => {
 		const content = message.content.split(' ');
 		if (content[1] === 'start') {
 			guild.showDonations = true;
-			client.channels.cache.get(guild.channel).send('Tiltify donations have been enabled! Fetching donations every ' + (donationRefresh / 1000) + ' seconds.');
+			client.channels.cache.get(guild.channel).send('Tiltify donations have been enabled!');
 		}
 		else if (content[1] === 'stop') {
 			guild.showDonations = false;
@@ -145,7 +143,7 @@ client.once('ready', () => {
 			.setURL("https://github.com/nicnacnic/tiltify-donation-bot")
 			.setDescription("The default prefix is `$`, but this can be changed.\nPlease note that most commands require special permissions.")
 			.addField("General Commands", "`" + prefix + "help`: The help menu. You\'re seeing it right now!\n `" + prefix + "ping`: Pong! Test the response speed to the server.\n`" + prefix + "donation`: Show the most recent donation.\n`" + prefix + "guide`: Don't how to setup the bot? Here's a guide!")
-			.addField("Permission Based Commands", "`" + prefix + "setup <campaign_id> <auth_token>`: Setup Tiltify information for the bot.\n`" + prefix + "role <role_id>`: Set the minimum role to use the permission based commands.\n`" + prefix + "tiltify <start/stop>`: Start or stop the live donation feed.\n`" + prefix + "delete`: Deactivate the bot and delete all settings on the server.\n`" + prefix + "prefix <prefix>`: Change the default prefix of the bot.")
+			.addField("Permission Based Commands", "`" + prefix + "setup <campaign_id>`: Setup Tiltify information for the bot.\n`" + prefix + "role <role_id>`: Set the minimum role to use the permission based commands.\n`" + prefix + "tiltify <start/stop>`: Start or stop the live donation feed.\n`" + prefix + "delete`: Deactivate the bot and delete all settings on the server.\n`" + prefix + "prefix <prefix>`: Change the default prefix of the bot.")
 			.setThumbnail("https://cdn.discordapp.com/avatars/815284001618395238/610e0bab7664afead2a9eac970444d39.png?size=256")
 			.setFooter("Tiltify Bot made by nicnacnic")
 			.setTimestamp()
@@ -157,7 +155,7 @@ client.once('ready', () => {
 			.setTitle("Tiltify Bot Setup Guide")
 			.setURL("https://github.com/nicnacnic/tiltify-donation-bot")
 			.setDescription("Did you ask for help setting up this bot? Well here you go!\nBefore we start, make sure you have the manage messages or admin permission on your server. All users with these permissions will be able to change the bot settings.")
-			.addField("Configuration", "You will need your Tiltify Campaign ID and Auth Token to set up the bot. The Campaign ID is found in your campaign settings, under the details tab. To generate an Auth Token, go to your account, click on `Connected Apps`, and then go to `Your Applications`. Click on `Create Application`, enter whatever name and URL you want, then click on `Save Changes`. The key you want is the Secret Key, the other ones don't matter.\nNow, type `$setup <campaign_id> <auth_token>`, this should set up the bot and gather all required information. You'll notice that the bot deletes your message, that's to protech your auth token from falling into the wrong hands.")
+			.addField("Configuration", "You will need your Tiltify Campaign ID to set up the bot. The Campaign ID is found in your campaign settings, under the details tab. \nNow, type `$setup <campaign_id>, this should set up the bot and gather all required information. Now all relevent information should be in the bot's database, and you're ready to start showing donations!")
 			.addField("Showing Donations", "With everything set up, you simply need to run `$tiltify start` to start fetching donations. When you're done with your campaign, type `$tiltify stop` to stop fetching donations. Please do this to save on server resources!")
 			.addField("Additional Options", "There are a couple additional options for the bot.\nWant to allow other members of your team adjust the bot? Use the command `$role <role_id>` to give them access!\nWant to change the bot prefix? You can do that with `$prefix <prefix>`! Your custom prefix will stay until you decide to deactivate the bot.")
 			.addField("Deactivating The Bot", "If you no longer need the bot at all, you can easily delete all saved data from the server. All you have to do is type the command `$delete`.")
