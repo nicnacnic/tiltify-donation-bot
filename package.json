@@ -1,13 +1,13 @@
 {
   "name": "tiltify-donation-bot",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "A bot that posts Tiltify donation data to Discord.",
   "homepage": "https://github.com/nicnacnic/tiltify-donation-bot",
   "author": "nicnacnic",
   "url": "https://nicnacnic.com",
   "license": "MIT",
   "dependencies": {
-    "discord.js": "^12.5.1",
+    "discord.js": "^13.0.0-dev.7e30011.1625338909",
     "fs": "^0.0.1-security",
     "node-fetch": "^2.6.1"
   }

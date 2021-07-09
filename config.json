@@ -1,6 +1,6 @@
 {
-	"token": "",
-	"tiltifyAccessToken": "",
+	"token": "ODYxMDAxNTQ1NTk1NzQ4MzUy.YODcLQ.6rDgxIUIldj5YdQHfRMYX0lZSS0",
+	"tiltifyAccessToken": "0ecbe55d8682076e05a09f78c1c1a8933df00a9f9361287b53f5eecf57b4c5cb",
 	"defaultPrefix": "$",
-	"donationRefresh": 20000
+	"donationRefresh": 5000
 }
