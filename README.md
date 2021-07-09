@@ -8,7 +8,7 @@ A bot that posts Tiltify donation data to Discord.
 This verion of the bot is meant to be self-hosted. To deploy the hosted version, invite the bot via this link: [https://discord.com/oauth2/authorize?client_id=815284001618395238&scope=bot](https://discord.com/oauth2/authorize?client_id=815284001618395238&scope=bot)
 
 ## Requirements
-The user configuring the bot must have the manage messages or admin permission on the server to set up the bot. The bot will only work if it has the *manage messages* permission in the channel where the command is typed, otherwise the command won't work. it is recommended to block @everyone from the channel where the bot is configured to prevent random members from adding/removing campaigns, starting/stopping the donation stream, etc..
+The user configuring the bot must have the manage messages or admin permission on the server to set up the bot. The bot will only work if it has the `manage messages` permission in the channel where the command is typed, otherwise the command won't work. it is recommended to block @everyone from the channel where the bot is configured to prevent random members from adding/removing campaigns, starting/stopping the donation stream, etc..
 
 ## Installation
 You will need a Discord bot token and a Tiltify API access token, obtaining the two are outside the scope of this guide. Download the latest [release](https://github.com/nicnacnic/tiltify-donation-bot/releases), and unzip the files to a folder of your choice. In `config.json`, copy/paste your bot token and access token into the first two fields. Finally, run `node index.js` whenever you want to start the bot. *Note that it can take up to an hour for the slash commands to appear on first startup.*
