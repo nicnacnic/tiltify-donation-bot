@@ -5,7 +5,7 @@ A bot that posts Tiltify donation data to Discord.
 
 
 ## Hosted Version
-This verion of the bot is meant to be self-hosted. To deploy the hosted version, invite the bot via this link: [https://discord.com/oauth2/authorize?client_id=815284001618395238&scope=bot](https://discord.com/oauth2/authorize?client_id=815284001618395238&scope=bot)
+This verion of the bot is meant to be self-hosted. To deploy the hosted version, invite the bot via [this link](https://discord.com/api/oauth2/authorize?client_id=815284001618395238&permissions=2147560448&scope=bot%20applications.commands).
 
 ## Requirements
 The user configuring the bot must have the manage messages or admin permission on the server to invite the bot. The bot will only work if it has the manage messages permission in the channel where the command is typed, otherwise the command won't work. It is recommended that you create an announcement channel that the bot and trusted users can access to prevent unauthorized users from adding/removing campaigns, starting/stopping donations, etc...
