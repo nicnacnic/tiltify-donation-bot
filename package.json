@@ -1,6 +1,6 @@
 {
   "name": "tiltify-donation-bot",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A bot that posts Tiltify donation data to Discord.",
   "homepage": "https://github.com/nicnacnic/tiltify-donation-bot",
   "author": "nicnacnic",
