@@ -16,22 +16,25 @@ function fetchData(type, id, callback) {
 
 function generateData(campaign, callback) {
     fetchData('causes', campaign.causeId, (causeData) => {
-        let teamData = { data: { name: '' } };
-        if (campaign.team !== undefined && campaign.team.id !== undefined)
-            fetchData('teams', campaign.team.id, (result) => {
-                teamData = result;
-                callback({
-                    name: campaign.name,
-                    id: campaign.id,
-                    url: campaign.user.url + '/' + campaign.slug,
-                    avatarUrl: campaign.avatar.src,
-                    currency: campaign.causeCurrency,
-                    cause: causeData.data.name,
-                    team: teamData.data.name,
-                    lastDonationId: 0,
-                });
-            })
-    });
+        let teamID = 0;
+        let teamName = 'None';
+        if (campaign.team !== undefined)
+            teamID = campaign.team.id;
+        fetchData('teams', teamID, (result) => {
+            if (result.meta.status === 200 && result.data.name !== undefined)
+                teamName = result.data.name;
+            callback({
+                name: campaign.name,
+                id: campaign.id,
+                url: campaign.user.url + '/' + campaign.slug,
+                avatarUrl: campaign.avatar.src,
+                currency: campaign.causeCurrency,
+                cause: causeData.data.name,
+                team: teamName,
+                lastDonationId: 0,
+            });
+        });
+    })
 }
 
 function generateEmbed(campaign, donation, callback) {
@@ -55,7 +58,7 @@ function generateEmbed(campaign, donation, callback) {
             ],
             timestamp: new Date(),
             footer: {
-                text: 'Donated towards cause ' + campaign.cause,
+                text: 'Donated towards ' + campaign.cause,
             }
         };
         callback(donationEmbed);
@@ -63,7 +66,6 @@ function generateEmbed(campaign, donation, callback) {
 }
 
 function listEmbedGenerator(i, guildData, callback) {
-    let type;
     let listEmbed = {
         title: 'Tracked Campaigns',
         url: 'https://tiltify.com',
@@ -81,6 +83,12 @@ function listEmbedGenerator(i, guildData, callback) {
 
 function convertToSlug(text, callback) {
     callback(text.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-'));
+}
+
+function titleCase(str, callback) {
+    callback(str.toLowerCase().split(' ').map(function (word) {
+        return word.replace(word[0], word[0].toUpperCase());
+    }).join(' '));
 }
 
 function convertCurrency(currencyCode, callback) {
@@ -131,6 +139,74 @@ function convertCurrency(currencyCode, callback) {
     else
         callback('$');
 }
+
+const globalCommandData = [{
+    name: 'find',
+    description: 'Search for active campaigns by user, team or cause',
+    options: [{
+        name: 'type',
+        type: 'STRING',
+        description: 'Your type of search',
+        required: true,
+        choices: [
+            {
+                name: 'user',
+                value: 'users',
+            },
+            {
+                name: 'team',
+                value: 'teams',
+            },
+            {
+                name: 'cause',
+                value: 'causes',
+            }],
+    },
+    {
+        name: 'query',
+        type: 'STRING',
+        description: 'Your user, team or cause name/id',
+        required: true,
+    }],
+},
+{
+    name: 'setup',
+    description: 'Setup the bot with your Tiltify campaign information',
+    options: [{
+        name: 'type',
+        type: 'STRING',
+        description: 'Your type of campaign',
+        required: true,
+        choices: [
+            {
+                name: 'campaign',
+                value: 'campaigns',
+            },
+            {
+                name: 'team',
+                value: 'teams',
+            },
+            {
+                name: 'cause',
+                value: 'causes',
+            },
+            {
+                name: 'event',
+                value: 'fundraising-events',
+            },
+        ]
+    },
+    {
+        name: 'id',
+        type: 'INTEGER',
+        description: 'Your Tiltify campaign id',
+        required: true,
+    }],
+},
+{
+    name: 'ping',
+    description: 'Test response time to the server',
+}]
 
 const guildCommandData = [{
     name: 'add',
@@ -194,4 +270,4 @@ const guildCommandData = [{
     description: 'Deactivate the bot and delete all data',
 }];
 
-module.exports = { fetchData, generateData, generateEmbed, listEmbedGenerator, convertToSlug, guildCommandData }
+module.exports = { fetchData, generateData, generateEmbed, listEmbedGenerator, convertToSlug, titleCase, globalCommandData, guildCommandData }
