@@ -35,5 +35,23 @@ This bot uses slash commands, they can be found by typing `/` in Discord and cli
 - `/remove <id>`: Remove a campaign for the list of tracked campaigns
 - `/tiltify <action>`: Start or stop the showing of donations
 
+## Stored Data
+The bot stores a variety of information to request and post donations. Be assured that none of this information is sensitive and can be easily accessed by anyone with a Tiltify access token and a bit of knowledge on their API. **I use my own personal access token to request all this information.** If you have any questions or concerns please contact me.
+
+#### General Info
+- Server ID
+- Donation Channel ID
+- List of Stored Campaigns
+
+#### Campaign-Specific Info
+- Name
+- ID
+- URL
+- Avatar Image
+- Currency
+- Cause Name
+- Team (if applicable)
+- Last Donation ID
+
 ## Support
 For support please reach out to nicnacnic#5683 on Discord. Thanks for using this bot!
