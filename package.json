@@ -7,7 +7,7 @@
   "url": "https://nicnacnic.com",
   "license": "MIT",
   "dependencies": {
-    "discord.js": "^13.0.0-dev.7e30011.1625338909",
+    "discord.js": "^13.1.0",
     "fs": "^0.0.1-security",
     "node-fetch": "^2.6.1"
   }

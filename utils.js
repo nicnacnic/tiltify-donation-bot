@@ -38,31 +38,69 @@ function generateData(campaign, callback) {
 }
 
 function generateEmbed(campaign, donation, callback) {
+    let incentiveEmbed;
     let currency;
-    convertCurrency(campaign.currency, (result) => {
-        currency = result;
-        let donationComment = 'No comment.'
-        if (donation.comment !== '')
-            donationComment = donation.comment;
-        let donationEmbed = {
-            title: campaign.name + ' received a donation!',
-            url: campaign.url,
-            thumbnail: {
-                url: campaign.avatarUrl,
-            },
-            fields: [
-                {
-                    name: `${donation.name} donates ${currency}${donation.amount}`,
-                    value: donationComment,
-                }
-            ],
-            timestamp: new Date(),
-            footer: {
-                text: 'Donated towards ' + campaign.cause,
-            }
-        };
-        callback(donationEmbed);
+    fetchData('campaigns', campaign.id + '/challenges', (challenges) => {
+        fetchData('campaigns', campaign.id + '/polls', (polls) => {
+            convertCurrency(campaign.currency, (result) => {
+                currency = result;
+                let donationComment = 'No comment.'
+                if (donation.comment !== '' && donation.comment !== undefined && donation.comment !== null)
+                    donationComment = donation.comment;
+                let donationEmbed = {
+                    title: campaign.name + ' has received a donation!',
+                    url: campaign.url,
+                    thumbnail: {
+                        url: campaign.avatarUrl,
+                    },
+                    fields: [
+                        {
+                            name: `${donation.name} donates ${currency}${donation.amount}`,
+                            value: donationComment,
+                        }
+                    ],
+                    timestamp: new Date(),
+                    footer: {
+                        text: 'Donated towards ' + campaign.cause,
+                    }
+                };
+                challenges.data.forEach(element => {
+                    if (donation.challengeId !== undefined && element.id === donation.challengeId)
+                        donationEmbed.fields.push({ name: 'Challenges', value: element.name })
+                    if (element.totalAmountRaised >= element.amount && element.active)
+                        generateIncentiveEmbed(campaign, element, currency, (embed) => incentiveEmbed = embed)
+                })
+                polls.data.forEach(element => {
+                    element.options.forEach(poll => {
+                        if (donation.pollOptionId !== undefined && poll.id === donation.pollOptionId)
+                            donationEmbed.fields.push({ name: 'Polls', value: `${element.name} - ${poll.name}` })
+                    })
+                })
+                console.log(donation)
+                callback(donationEmbed, incentiveEmbed);
+            });
+        });
     });
+}
+
+function generateIncentiveEmbed(campaign, challenge, currency, callback) {
+    callback({
+        title: campaign.name + ' has met a challenge!',
+        url: campaign.url,
+        thumbnail: {
+            url: campaign.avatarUrl,
+        },
+        fields: [
+            {
+                name: challenge.name,
+                value: `Goal: ${currency}${challenge.amount}\nTotal Raised: ${currency}${challenge.totalAmountRaised}`,
+            }
+        ],
+        timestamp: new Date(),
+        footer: {
+            text: 'Donated towards ' + campaign.cause,
+        }
+    })
 }
 
 function listEmbedGenerator(i, guildData, callback) {

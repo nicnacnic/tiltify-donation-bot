@@ -10,8 +10,10 @@ client.once('ready', async () => {
 
 	// Check for global commands.
 	const commandList = await client.api.applications(client.user.id).commands.get();
-	if (commandList === undefined || commandList.length === 0)
+	if (commandList === undefined || commandList.length !== 3) {
 		await client.application?.commands.set(globalCommandData)
+		console.log('First launch detected, note that it can take up to an hour for global slash commands to show up in your server. Thanks for your patience!')
+	}
 	console.log('Global command check complete, the bot is now online.');
 	updateStatus();
 	dailyRefresh();
@@ -28,11 +30,15 @@ client.once('ready', async () => {
 						donation = callback;
 						try {
 							if (guildData[i].campaigns[j].lastDonationId !== donation.data[0].id) {
-								generateEmbed(campaign, donation.data[0], (callback) => client.channels.cache.get(guildData[i].channel).send({ embeds: [callback] }))
+								generateEmbed(campaign, donation.data[0], (donationEmbed, incentiveEmbed) => {
+									client.channels.cache.get(guildData[i].channel).send({ embeds: [donationEmbed] })
+									if (incentiveEmbed !== undefined)
+									client.channels.cache.get(guildData[i].channel).send({ embeds: [incentiveEmbed] })
+								})
 								guildData[i].campaigns[j].lastDonationId = donation.data[0].id;
 								writeData()
 							}
-						} catch { console.log('There was an error reading donation data on ' + Date.toString()) }
+						} catch (e) { console.log(e) }
 					});
 				})
 			}
@@ -161,47 +167,9 @@ client.once('ready', async () => {
 					interaction.editReply('Due to buisness requirements, retrieving campaings from causes and fundraising events is currently disabled. For more information, visit <https://github.com/Tiltify/api/issues/21#issuecomment-820740664>. If you are a cause and have API access, please contact nicnacnic#5683 to re-enable this feature.')
 					break;
 
-				// let causeData;
-				// fetchData('causes', interaction.options.get('id').value + '/campaigns?count=100', (callback) => causeData = callback);
-				// if (causeData.meta.status === 200) {
-				// 	causeData.data.forEach(campaign => {
-				// 		if (campaign.status !== 'retired') {
-				// 			number++;
-				// 			generateData(campaign, (callback) => dataToWrite.campaigns.push(callback))
-				// 		}
-				// 	})
-				// dataToWrite.push({ connectedId: interaction.options.get('id').value })
-				// 	await guildData.push(dataToWrite);
-				// 	writeData();
-				// 	createGuildCommands(interaction);
-				// 	interaction.editReply('Donations have been setup for cause `' + result.data.name + '`, ' + number + ' active campaigns were found.')
-				// 	break;
-				// }
-				// error(interaction, data.meta.status)
-				// break;
-
 				case 'fundraising-events':
 					interaction.editReply('Due to buisness requirements, retrieving campaings from causes and fundraising events is currently disabled. For more information, visit <https://github.com/Tiltify/api/issues/21#issuecomment-820740664>. If you are a cause and have API access, please contact nicnacnic#5683 to re-enable this feature.')
 					break;
-
-				// let eventData;
-				//fetchData('fundraising-events', interaction.options.get('id').value + '/campaigns?count=100', (callback) => eventData = callback);
-				// if (eventData.meta.status === 200) {
-				// 	eventData.data.forEach(campaign => {
-				// 		if (campaign.status !== 'retired') {
-				// 			number++;
-				// 			generateData(campaign, (callback) => dataToWrite.campaigns.push(callback))
-				// 		}
-				// 	})
-				// dataToWrite.push({ connectedId: interaction.options.get('id').value })
-				// 	await guildData.push(dataToWrite);
-				// 	writeData();
-				// 	createGuildCommands(interaction);
-				// 	interaction.editReply('Donations have been setup for event `' + result.data.name + '`, ' + number + ' active campaigns were found.')
-				// 	break;
-				// }
-				// error(interaction, data.meta.status)
-				// break;
 			}
 		});
 	}
