@@ -65,10 +65,11 @@ function generateEmbed(campaign, donation, callback) {
                     }
                 };
                 challenges.data.forEach(element => {
-                    if (donation.challengeId !== undefined && element.id === donation.challengeId)
+                    if (donation.challengeId !== undefined && element.id === donation.challengeId) {
                         donationEmbed.fields.push({ name: 'Challenges', value: element.name })
-                    if (element.totalAmountRaised >= element.amount && element.active)
-                        generateIncentiveEmbed(campaign, element, currency, (embed) => incentiveEmbed = embed)
+                        if (element.totalAmountRaised >= element.amount && element.active)
+                            generateIncentiveEmbed(campaign, element, currency, (embed) => incentiveEmbed = embed)
+                    }
                 })
                 polls.data.forEach(element => {
                     element.options.forEach(poll => {
