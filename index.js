@@ -27,18 +27,27 @@ client.once('ready', async () => {
 					let j = guildData[i].campaigns.findIndex(item => item.id === campaign.id)
 					let donation;
 					fetchData('campaigns', `${campaign.id}/donations`, (callback) => {
-						donation = callback;
-						try {
-							if (guildData[i].campaigns[j].lastDonationId !== donation.data[0].id) {
-								generateEmbed(campaign, donation.data[0], (donationEmbed, incentiveEmbed) => {
-									client.channels.cache.get(guildData[i].channel).send({ embeds: [donationEmbed] })
-									if (incentiveEmbed !== undefined)
-									client.channels.cache.get(guildData[i].channel).send({ embeds: [incentiveEmbed] })
-								})
-								guildData[i].campaigns[j].lastDonationId = donation.data[0].id;
-								writeData()
-							}
-						} catch (e) { console.log(e) }
+						donation = callback.data[0];
+						if (donation.completedAt + 2.592e8 <= Date.now()) {
+							client.channels.cache.get(guildData[i].channel).send('No donations have been detected in the last 72 hours, therefore the bot has removed campaign `' + guildData[i].campaigns[j].name + '` to save resources. To add the campaign again please use `/add`.');
+							guildData[i].campaigns.splice(j, 1);
+							if (guildData[i].campaigns.length === 0)
+								guildData[i].active = false;
+							writeData();
+						}
+						else {
+							try {
+								if (guildData[i].campaigns[j].lastDonationId !== donation.id) {
+									generateEmbed(campaign, donation, (donationEmbed, incentiveEmbed) => {
+										client.channels.cache.get(guildData[i].channel).send({ embeds: [donationEmbed] })
+										if (incentiveEmbed !== undefined)
+											client.channels.cache.get(guildData[i].channel).send({ embeds: [incentiveEmbed] })
+									})
+									guildData[i].campaigns[j].lastDonationId = donation.id;
+									writeData();
+								}
+							} catch { }
+						}
 					});
 				})
 			}
