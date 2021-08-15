@@ -77,7 +77,6 @@ function generateEmbed(campaign, donation, callback) {
                             donationEmbed.fields.push({ name: 'Polls', value: `${element.name} - ${poll.name}` })
                     })
                 })
-                console.log(donation)
                 callback(donationEmbed, incentiveEmbed);
             });
         });
