@@ -1,7 +1,11 @@
+
 const fs = require('fs');
 const fetch = require('node-fetch');
+const { MessageEmbed } = require('discord.js');
 const { tiltifyAccessToken } = require('./config.json');
-function fetchData(type, id, callback) {
+const utils = require('./utils');
+
+module.exports.fetchData = (type, id, callback) => {
     fetch(`https://tiltify.com/api/v3/${type}/${id}`, {
         method: 'GET',
         headers: {
@@ -14,16 +18,16 @@ function fetchData(type, id, callback) {
         });
 }
 
-function generateData(campaign, callback) {
-    fetchData('causes', campaign.causeId, (causeData) => {
+module.exports.generateData = (campaign, index) => {
+    utils.fetchData('causes', campaign.causeId, (causeData) => {
         let teamID = 0;
         let teamName = 'None';
         if (campaign.team !== undefined)
             teamID = campaign.team.id;
-        fetchData('teams', teamID, (result) => {
+        utils.fetchData('teams', teamID, (result) => {
             if (result.meta.status === 200 && result.data.name !== undefined)
                 teamName = result.data.name;
-            callback({
+            guildData[index].campaigns.push({
                 name: campaign.name,
                 id: campaign.id,
                 url: campaign.user.url + '/' + campaign.slug,
@@ -32,104 +36,70 @@ function generateData(campaign, callback) {
                 cause: causeData.data.name,
                 team: teamName,
                 lastDonationId: 0,
-            });
+                lastDonationTime: 0
+            })
+            writeData();
         });
     })
 }
 
-function generateEmbed(campaign, donation, callback) {
-    let incentiveEmbed;
-    let currency;
-    fetchData('campaigns', campaign.id + '/challenges', (challenges) => {
-        fetchData('campaigns', campaign.id + '/polls', (polls) => {
-            convertCurrency(campaign.currency, (result) => {
-                currency = result;
-                let donationComment = 'No comment.'
-                if (donation.comment !== '' && donation.comment !== undefined && donation.comment !== null)
-                    donationComment = donation.comment;
-                let donationEmbed = {
-                    title: campaign.name + ' has received a donation!',
-                    url: campaign.url,
-                    thumbnail: {
-                        url: campaign.avatarUrl,
-                    },
-                    fields: [
-                        {
-                            name: `${donation.name} donates ${currency}${donation.amount}`,
-                            value: donationComment,
-                        }
-                    ],
-                    timestamp: new Date(),
-                    footer: {
-                        text: 'Donated towards ' + campaign.cause,
-                    }
-                };
-                challenges.data.forEach(element => {
-                    if (donation.challengeId !== undefined && element.id === donation.challengeId) {
-                        donationEmbed.fields.push({ name: 'Challenges', value: element.name })
-                        if (element.totalAmountRaised >= element.amount && element.active)
-                            generateIncentiveEmbed(campaign, element, currency, (embed) => incentiveEmbed = embed)
-                    }
+module.exports.generateEmbed = (client, campaign, donation, channel) => {
+    utils.fetchData('campaigns', campaign.id + '/challenges', (challenges) => {
+        utils.fetchData('campaigns', campaign.id + '/polls', (polls) => {
+            let donationComment = 'No comment.'
+            if (donation.comment !== '' && donation.comment !== undefined && donation.comment !== null)
+                donationComment = donation.comment;
+            let donationEmbed = new MessageEmbed()
+                .setTitle(`${campaign.name} has received a donation!`)
+                .setURL(campaign.url)
+                .setThumbnail(campaign.avatarUrl)
+                .addField(`${donation.name} donates ${convertCurrency(campaign.currency)}${donation.amount}`, donationComment)
+                .setTimestamp(donation.completedAt)
+                .setFooter(`Donated towards ${campaign.cause}`);
+
+            challenges.data.forEach(challenge => {
+                if (donation.challengeId !== undefined && challenge.id === donation.challengeId) {
+                    donationEmbed.addField('Challenges', challenge.name)
+                    if (challenge.totalAmountRaised >= challenge.amount && challenge.active)
+                        generateIncentiveEmbed(client, campaign, challenge)
+                }
+            })
+            polls.data.forEach(poll => {
+                poll.options.forEach(pollOption => {
+                    if (donation.pollOptionId !== undefined && pollOption.id === donation.pollOptionId)
+                        donationEmbed.addField('Polls', `${poll.name} - ${pollOption.name}`)
                 })
-                polls.data.forEach(element => {
-                    element.options.forEach(poll => {
-                        if (donation.pollOptionId !== undefined && poll.id === donation.pollOptionId)
-                            donationEmbed.fields.push({ name: 'Polls', value: `${element.name} - ${poll.name}` })
-                    })
-                })
-                callback(donationEmbed, incentiveEmbed);
-            });
+            })
+            client.channels.cache.get(channel).send({ embeds: [donationEmbed] })
         });
     });
 }
 
-function generateIncentiveEmbed(campaign, challenge, currency, callback) {
-    callback({
-        title: campaign.name + ' has met a challenge!',
-        url: campaign.url,
-        thumbnail: {
-            url: campaign.avatarUrl,
-        },
-        fields: [
-            {
-                name: challenge.name,
-                value: `Goal: ${currency}${challenge.amount}\nTotal Raised: ${currency}${challenge.totalAmountRaised}`,
-            }
-        ],
-        timestamp: new Date(),
-        footer: {
-            text: 'Donated towards ' + campaign.cause,
-        }
-    })
+function generateIncentiveEmbed(client, campaign, challenge) {
+    let incentiveEmbed = new MessageEmbed()
+        .setTitle(`${campaign.name} has met an incentive!`)
+        .setURL(campaign.url)
+        .setThumbnail(campaign.avatarUrl)
+        .addField(challenge.name, `Goal: ${convertCurrency(campaign.currency)}${challenge.amount}\nTotal Raised: ${convertCurrency(campaign.currency)}${challenge.totalAmountRaised}`)
+        .setTimestamp(challenge.updatedAt)
+        .setFooter(`Donated towards ${campaign.cause}`)
+    client.channels.cache.get(channel).send({ embeds: [incentiveEmbed] })
 }
 
-function listEmbedGenerator(i, guildData, callback) {
-    let listEmbed = {
-        title: 'Tracked Campaigns',
-        url: 'https://tiltify.com',
-        fields: [],
-        timestamp: new Date(),
-    };
-    guildData[i].campaigns.forEach(campaign => {
-        listEmbed.fields.push({
-            name: campaign.name,
-            value: `Cause: ${campaign.cause}\nTeam: ${campaign.team}\nID: ${campaign.id}`,
-        })
-    })
-    callback(listEmbed);
+module.exports.generateListEmbed = (index, interaction) => {
+    let listEmbed = new MessageEmbed()
+        .setTitle('Tracked Campaigns')
+        .setURL('https://tiltify.com')
+        .setTimestamp()
+    guildData[index].campaigns.forEach(campaign => listEmbed.addField(campaign.name, `Cause: ${campaign.cause}\nTeam: ${campaign.team}\nID: ${campaign.id}`))
+    interaction.editReply({ embeds: [listEmbed] })
 }
 
-function convertToSlug(text, callback) {
-    callback(text.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-'));
+module.exports.convertToSlug = (text, callback) => {
+    return text.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-')
 }
 
-function titleCase(str, callback) {
-    callback(str.toLowerCase().split(' ').map(function (word) {
-        return word.replace(word[0], word[0].toUpperCase());
-    }).join(' '));
-}
-
-function convertCurrency(currencyCode, callback) {
+function convertCurrency(currencyCode) {
     const currencySymbols = {
         'USD': '$', // US Dollar
         'EUR': '€', // Euro
@@ -172,140 +142,13 @@ function convertCurrency(currencyCode, callback) {
         'UAH': '₴', // Ukrainian Hryvnia
         'VND': '₫', // Vietnamese Dong
     };
-    if (currencySymbols[currencyCode] !== undefined)
-        callback(currencySymbols[currencyCode]);
-    else
-        callback('$');
+    switch (currencySymbols[currencyCode]) {
+        case undefined: return '$'; break;
+        default: return currencySymbols[currencyCode]; break;
+    }
 }
 
-const globalCommandData = [{
-    name: 'find',
-    description: 'Search for active campaigns by user, team or cause',
-    options: [{
-        name: 'type',
-        type: 'STRING',
-        description: 'Your type of search',
-        required: true,
-        choices: [
-            {
-                name: 'user',
-                value: 'users',
-            },
-            {
-                name: 'team',
-                value: 'teams',
-            },
-            {
-                name: 'cause',
-                value: 'causes',
-            }],
-    },
-    {
-        name: 'query',
-        type: 'STRING',
-        description: 'Your user, team or cause name/id',
-        required: true,
-    }],
-},
-{
-    name: 'setup',
-    description: 'Setup the bot with your Tiltify campaign information',
-    options: [{
-        name: 'type',
-        type: 'STRING',
-        description: 'Your type of campaign',
-        required: true,
-        choices: [
-            {
-                name: 'campaign',
-                value: 'campaigns',
-            },
-            {
-                name: 'team',
-                value: 'teams',
-            },
-            {
-                name: 'cause',
-                value: 'causes',
-            },
-            {
-                name: 'event',
-                value: 'fundraising-events',
-            },
-        ]
-    },
-    {
-        name: 'id',
-        type: 'INTEGER',
-        description: 'Your Tiltify campaign id',
-        required: true,
-    }],
-},
-{
-    name: 'ping',
-    description: 'Test response time to the server',
-}]
-
-const guildCommandData = [{
-    name: 'add',
-    description: 'Add a campaign to the list of tracked campaigns',
-    options: [{
-        name: 'id',
-        type: 'INTEGER',
-        description: 'A valid Tiltify campaign id',
-        required: true,
-    }],
-},
-{
-    name: 'remove',
-    description: 'Remove a campaign from the list of tracked campaigns',
-    options: [{
-        name: 'id',
-        type: 'INTEGER',
-        description: 'A valid Tiltify campaign id',
-        required: true,
-    }],
-},
-{
-    name: 'refresh',
-    description: 'Refresh all campaigns attatched to a team, cause or event',
-},
-{
-    name: 'list',
-    description: 'List all tracked campaigns',
-},
-{
-    name: 'channel',
-    description: 'Change the channel where donations are posted',
-    options: [{
-        name: 'id',
-        type: 'CHANNEL',
-        description: 'A valid channel in your server',
-        required: true,
-    }],
-},
-{
-    name: 'tiltify',
-    description: 'Start or stop the showing of donations',
-    options: [{
-        name: 'action',
-        type: 'STRING',
-        description: 'Start or stop the showing of donations',
-        required: true,
-        choices: [
-            {
-                name: 'start',
-                value: 'start',
-            },
-            {
-                name: 'stop',
-                value: 'stop',
-            }],
-    }]
-},
-{
-    name: 'delete',
-    description: 'Deactivate the bot and delete all data',
-}];
-
-module.exports = { fetchData, generateData, generateEmbed, listEmbedGenerator, convertToSlug, titleCase, globalCommandData, guildCommandData }
+// Write data to file.
+function writeData() {
+    fs.writeFileSync('./guilds.json', JSON.stringify(guildData));
+}
