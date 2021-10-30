@@ -100,7 +100,7 @@ client.once('ready', () => {
 			return;
 		}
 		utils.fetchData(interaction.options.getString('type'), interaction.options.getInteger('id'), (result) => {
-			if (result.meta.status === 200 && interaction.options.getChannel('channel').type === 'GUILD_TEXT') {
+			if (result.meta.status === 200 && (interaction.options.getChannel('channel').type === 'GUILD_TEXT' || interaction.options.getChannel('channel').type === 'GUILD_NEWS')) {
 				guildData.push({
 					guild: interaction.guildId,
 					channel: interaction.options.getChannel('channel').id,
