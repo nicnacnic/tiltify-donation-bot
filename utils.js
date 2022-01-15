@@ -61,7 +61,7 @@ module.exports.generateEmbed = (client, campaign, donation, channel) => {
                 if (donation.challengeId !== undefined && challenge.id === donation.challengeId) {
                     donationEmbed.addField('Challenges', challenge.name)
                     if (challenge.totalAmountRaised >= challenge.amount && challenge.active)
-                        generateIncentiveEmbed(client, campaign, challenge)
+                        generateIncentiveEmbed(client, campaign, challenge, channel)
                 }
             })
             polls.data.forEach(poll => {
@@ -75,7 +75,7 @@ module.exports.generateEmbed = (client, campaign, donation, channel) => {
     });
 }
 
-function generateIncentiveEmbed(client, campaign, challenge) {
+function generateIncentiveEmbed(client, campaign, challenge, channel) {
     let incentiveEmbed = new MessageEmbed()
         .setTitle(`${campaign.name} has met an incentive!`)
         .setURL(campaign.url)
